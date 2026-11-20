@@ -14,7 +14,16 @@
   <header class="site-header site-header--home">
     <div class="container">
       <a class="logo" href="index.html"><span class="logo-mark"></span>Calico Media</a>
-      <nav aria-label="Main">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="Open navigation"
+        aria-expanded="false"
+        aria-controls="home-navigation"
+      >
+       ☰
+      </button>
+      <nav aria-label="Main" id="home-navigation">
         <ul class="nav-links">
           <li><a href="features.html">Features</a></li>
           <li><a href="pricing.html">Pricing</a></li>
@@ -188,5 +197,21 @@
       </div>
     </div>
   </footer>
+  <script>
+    const menuButton = document.querySelector(".menu-toggle");
+    const navigation = document.querySelector("#home-navigation");
+
+    menuButton.addEventListener("click", () => {
+      const isOpen = navigation.classList.toggle("is-open");
+
+    menuButton.setAttribute("aria-expanded", String(isOpen));
+    menuButton.setAttribute(
+      "aria-label",
+      isOpen ? "Close navigation" : "Open navigation"
+    );
+
+    menuButton.textContent = isOpen ? "✕" : "☰";
+  });
+  </script>
 </body>
 </html>
