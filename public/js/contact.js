@@ -1,5 +1,44 @@
+
 const form = document.getElementById('contact-form');
 const statusEl = document.getElementById('form-status');
+
+let timingToken = '';
+
+async function loadTimingToken() {
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await fetch('/contact-token', {
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        throw new Error('Could not load timing token');
+      }
+
+      const result = await response.json();
+
+      if (typeof result.token !== 'string' || !result.token) {
+        throw new Error('Invalid timing token received');
+      }
+
+      timingToken = result.token;
+      return;
+    } catch (error) {
+      console.error(
+        `Contact form initialization attempt ${attempt} failed:`,
+        error
+      );
+
+      if (attempt < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+  }
+}
+
+loadTimingToken();
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -10,13 +49,21 @@ form.addEventListener('submit', async (event) => {
   statusEl.className = 'form-status';
 
   const data = Object.fromEntries(new FormData(form));
+  data.timingToken = timingToken;
 
   try {
+    if (!timingToken) {
+      throw new Error(
+        'The contact form could not initialize. Please refresh the page and try again.'
+      );
+    }
+
     const response = await fetch('/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
+
     const result = await response.json();
 
     if (!result.ok) {
@@ -27,7 +74,9 @@ form.addEventListener('submit', async (event) => {
     statusEl.textContent = "Thanks, we'll be in touch within one business day.";
     statusEl.classList.add('form-status--success');
   } catch (error) {
-    statusEl.textContent = error.message || 'Something went wrong. Please email hello@calicomedia.co instead.';
+    statusEl.textContent =
+      error.message ||
+      'Something went wrong. Please email hello@calicomedia.co instead.';
     statusEl.classList.add('form-status--error');
   } finally {
     button.disabled = false;
